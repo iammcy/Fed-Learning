@@ -17,24 +17,26 @@ class Client:
         elif optimizer == "Adam":
             self.optimizer = optim.Adam(self.model.parameters(), lr=1e-3)
 
-    def train(self):
+    def train(self, epoch=5):
         size = len(self.dataloader.dataset)
-        epoch_loss = 0
-        for batch, (X, y) in enumerate(self.dataloader):
-            X, y = X.to(self.device), y.to(self.device)
+        
+        for _ in range(epoch):
+            epoch_loss = 0
+            for batch, (X, y) in enumerate(self.dataloader):
+                X, y = X.to(self.device), y.to(self.device)
 
-            # Compute prediction error
-            pred = self.model(X)
-            loss = self.loss_fn(pred, y)
+                # Compute prediction error
+                pred = self.model(X)
+                loss = self.loss_fn(pred, y)
 
-            # Backpropagation
-            self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
+                # Backpropagation
+                self.optimizer.zero_grad()
+                loss.backward()
+                self.optimizer.step()
 
-            epoch_loss += loss.item()
+                epoch_loss += loss.item()
+            epoch_loss /= size
 
-        epoch_loss /= size
         self.loss = epoch_loss
         print(f"Client loss: {epoch_loss:>7f}")
 

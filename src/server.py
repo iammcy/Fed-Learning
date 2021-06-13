@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 import random
+import copy
 
 class Server:
     def __init__(self, globalModel, loss="CrossEntropyLoss") -> None:
@@ -9,7 +10,7 @@ class Server:
         self.local_state_dict = []
         self.train_loss = 0
         self.model = globalModel.to(self.device)
-        self.global_state_dict = globalModel.state_dict()
+        self.global_state_dict = copy.deepcopy(globalModel.state_dict())
 
         if loss == "CrossEntropyLoss":
             self.loss_fn = nn.CrossEntropyLoss()

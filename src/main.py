@@ -1,9 +1,11 @@
+from torch import std
 from torch.utils.data import DataLoader, random_split
+from torchvision import transforms
 from torchvision.transforms import ToTensor
 from torchvision import datasets
 import random
 import numpy as np
-from model import LinearModel
+from model import CNNModel, LinearModel
 from server import Server
 from client import Client
 
@@ -11,20 +13,24 @@ from client import Client
 clientNum = 10              # the number of clients
 partRate = 0.8              # participation rate
 batch_size = 64
-Epoch = 20
+Epoch = 10
 
 # init the roles of FL
-model = LinearModel()
+model = CNNModel()
 server = Server(model)
 clients = []
 
+transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize(mean=(0.5,), std=(0.5,))
+])
 
 def initClients():
-    training_data = datasets.FashionMNIST(
+    training_data = datasets.MNIST(
         root="../data",
         train=True,
         download=True,
-        transform=ToTensor(),
+        transform=transform,
     )
     length = len(training_data)//clientNum
     training_data = random_split(training_data, [length]*clientNum)
@@ -38,11 +44,11 @@ def initClients():
 def main():
     initClients()
 
-    test_data = datasets.FashionMNIST(
+    test_data = datasets.MNIST(
         root="../data",
         train=False,
         download=True,
-        transform=ToTensor(),
+        transform=transform,
     )
     test_dataloader = DataLoader(test_data, batch_size=batch_size)
 
@@ -54,11 +60,9 @@ def main():
 
         # The 1 step
         for client in np.array(clients)[perm]:
-            ser_ep, ser_parame = server.sendParame() 
-            client.getParame(ser_ep, ser_parame)
-            client.train()
-            cli_ep, cli_parame, cli_loss = client.uploadParame()
-            server.getParame(cli_ep, cli_parame, cli_loss)
+            client.getParame(*server.sendParame())
+            client.train(1)
+            server.getParame(*client.uploadParame())
         
         # The 2 step
         server.aggregate()
