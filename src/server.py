@@ -53,5 +53,5 @@ class Server:
 
     def getParame(self, Epoch, localParame, loss):
         if Epoch == self.Epoch:
-            self.local_state_dict.append(localParame)
+            self.local_state_dict.append(copy.deepcopy(localParame))
             self.train_loss += loss
